@@ -39,6 +39,8 @@
 
 #include "portable.h"
 #include "imx_sdp.h"
+#include "imx_loader.h"
+#include "imx_loader_config.h"
 
 extern int debugmode;
 
@@ -298,19 +300,20 @@ int parse_opts(int argc, char * const *argv, char const **ttyfile,
 	static struct option long_options[] = {
 		{"help",	no_argument, 	0, 'h' },
 		{"verify",	no_argument, 	0, 'v' },
+		{"version",	no_argument, 	0, 'V' },
 		{"debugmode",	no_argument,	0, 'd' },
 		{"no-rtscts",	no_argument, 	0, 'n' },
 		{"no-association", no_argument, 0, 'N' },
 		{0,		0,		0, 0 },
 	};
 
-	while ((c = getopt_long(argc, argv, "+hdvnN", long_options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "+hdvVnN", long_options, NULL)) != -1) {
 		switch (c)
 		{
 		case 'h':
 		case '?':
 			print_usage();
-			return -1;
+			return 1;
 		case 'd':
 			debugmode = 1; /* global extern */
 			break;
@@ -323,6 +326,9 @@ int parse_opts(int argc, char * const *argv, char const **ttyfile,
 		case 'v':
 			*verify = 1;
 			break;
+		case 'V':
+			printf("imx_usb " IMX_LOADER_VERSION "\n");
+			return 1;
 		}
 	}
 
@@ -379,7 +385,9 @@ int main(int argc, char * const argv[])
 				&usertscts, &associate, &curr);
 
 	if (err < 0)
-		return err;
+		return EXIT_FAILURE;
+	else if (err > 0)
+		return EXIT_SUCCESS;
 
 	// Get machine specific configuration file..
 	if ((conffile = strrchr(conffilepath, PATH_SEPARATOR)) == NULL) {
